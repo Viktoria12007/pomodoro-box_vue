@@ -4,4 +4,4 @@ export interface Task {
   pomodoro: number
 }
 
-export type ListTasks = Task[]
+export type TasksList = Task[]
