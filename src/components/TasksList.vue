@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Button from '@/components/UI/Button.vue'
 import IconMenu from '@/components/icons/IconMenu.vue'
-import { useListTasksStore } from '@/stores/listTasks'
+import { useTasksListStore } from '@/stores/tasksList'
 import { storeToRefs } from 'pinia'
 import Dropdown from '@/components/UI/Dropdown.vue'
 import { reactive, ref } from 'vue'
@@ -17,7 +17,7 @@ const coords: CoordsDropdown = reactive({
   top: 0,
   left: 0,
 })
-const store = useListTasksStore()
+const store = useTasksListStore()
 const { tasks, totalTime, lengthTasks } = storeToRefs(store)
 
 store.$subscribe((mutation, state) => {
