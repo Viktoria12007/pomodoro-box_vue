@@ -2,13 +2,12 @@
 import { defineProps } from 'vue'
 
 defineProps<{
-  type?: string,
   variant?: string,
 }>()
 </script>
 
 <template>
-  <button :class='["button", variant ?? "primary" ]' :type=' type ?? "button"'>
+  <button :class='["button", variant ?? "primary" ]'>
     <slot/>
   </button>
 </template>
