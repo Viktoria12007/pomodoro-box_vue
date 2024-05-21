@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Description from '../components/Description.vue'
 import AddTaskForm from '../components/AddTaskForm.vue'
-import ListTasks from '../components/TasksList.vue'
+import TasksList from '../components/TasksList.vue'
 import Timer from '../components/Timer.vue'
 </script>
 
@@ -10,7 +10,7 @@ import Timer from '../components/Timer.vue'
     <div class='main__left-column'>
       <Description/>
       <AddTaskForm/>
-      <ListTasks/>
+      <TasksList/>
     </div>
     <Timer />
   </div>
