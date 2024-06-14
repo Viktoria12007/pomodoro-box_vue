@@ -6,19 +6,17 @@ import IconDelete from './icons/IconDelete.vue'
 import { useTasksListStore } from '@/stores/tasksList'
 import Button from '@/components/UI/Button.vue'
 
-const emit = defineEmits<{
-  (e: 'hideMenu'): void
+const emits = defineEmits<{
+  (event: 'showModal'): void
 }>()
-const store = useTasksListStore()
-const { editTask, deleteTask } = store;
 
-function handleEditTask(key, value) {
-  editTask(key, value)
-  emit('hideMenu')
+const store = useTasksListStore()
+
+function handleEditTask(property: string, action: string) {
+  store.editTask(property, action)
 }
 function handleDeleteTask() {
-  deleteTask()
-  emit('hideMenu')
+  emits('showModal')
 }
 </script>
 
@@ -37,7 +35,7 @@ function handleDeleteTask() {
       </Button>
     </li>
     <li class='action-list__item'>
-      <Button variant='light' class='action-list__button'>
+      <Button @click="store.setShowEditTaskInput(true)" variant='light' class='action-list__button'>
         <IconEdit/>
         <div>Редактировать</div>
       </Button>
@@ -56,6 +54,8 @@ function handleDeleteTask() {
   display: flex;
   flex-direction: column;
   list-style: none;
+  border: 1px solid var(--gray);
+  background-color: var(--white);
 }
 .action-list__item {
   display: flex;
