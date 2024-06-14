@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from '../components/UI/Button.vue'
+import Input from '../components/UI/Input.vue'
 import { useTasksListStore } from '@/stores/tasksList'
 import { computed, ref, watch } from 'vue'
 
@@ -14,7 +15,9 @@ function handleAddTask(e) {
     name: nameTask.value,
     pomodoro: 1,
   })
-  e.target.reset()
+  nameTask.value = ''
+  resolveValidation.value = false
+  // e.target.reset()
 }
 const validation = computed(() => {
   if (nameTask.value) {
@@ -36,8 +39,14 @@ watch(nameTask, () => {
 
 <template>
   <form @submit.prevent='handleAddTask' class='add-task-form'>
-    <input v-model.trim='nameTask' placeholder='Название задачи' class='add-task-form__input'/>
-    <div v-show='validation && resolveValidation' class='add-task-form__validation'>{{validation}}</div>
+    <Input
+      v-model='nameTask'
+      :validation='validation'
+      :resolveValidation='resolveValidation'
+      placeholder='Название задачи'
+      class='add-task-form__input'
+    />
+<!--    <div v-show='validation && resolveValidation' class='add-task-form__validation'>{{validation}}</div>-->
     <Button type='submit' :disabled='!!validation'>Добавить</Button>
   </form>
 </template>
@@ -52,19 +61,12 @@ watch(nameTask, () => {
   margin-bottom: 25px;
 }
 .add-task-form__input {
-  width: 100%;
-  max-width: 100%;
   padding: 19px 15px;
   margin-bottom: 35px;
-  border: none;
-  background-color: var(--gray-light);
 }
-.add-task-form__input::placeholder {
-  color: var(--gray-dark);
-}
-.add-task-form__validation {
-  position: absolute;
-  top: 55px;
-  color: var(--red);
-}
+/*.add-task-form__validation {*/
+/*  position: absolute;*/
+/*  top: 55px;*/
+/*  color: var(--red);*/
+/*}*/
 </style>
