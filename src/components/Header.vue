@@ -7,7 +7,7 @@ import IconChart from '@/components/icons/IconChart.vue'
   <header class='header'>
     <div class='header__wrap container'>
       <RouterLink to="/">
-        <img alt="Логотип" class="logo" src="@/assets/logo.svg" width="205" height="40" />
+        <img alt="Логотип" class="logo" src="@/assets/img/logo.svg" width="205" height="40" />
       </RouterLink>
       <nav>
         <RouterLink to="/statistics" class='header__link'>
