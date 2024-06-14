@@ -5,3 +5,8 @@ export interface Task {
 }
 
 export type TasksList = Task[]
+
+export interface CoordsDropdown {
+  top?: number,
+  left?: number,
+}
