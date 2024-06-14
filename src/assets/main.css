@@ -48,6 +48,9 @@ a {
     padding: 19px 50px;
     cursor: pointer;
 }
+.button:disabled {
+    cursor: not-allowed;
+}
 
 .container {
     max-width: 1280px;
