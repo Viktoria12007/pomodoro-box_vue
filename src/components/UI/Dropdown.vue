@@ -1,5 +1,5 @@
 <script setup lang='ts'>
-import { defineProps, ref, watch } from 'vue'
+import { defineProps, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
   parentOpen?: boolean,
@@ -8,16 +8,28 @@ const props = defineProps<{
     left?: number,
   }
 }>();
+const emits = defineEmits<{
+  (event: 'hideDropdown', e): void
+}>()
 
-const childOpen = ref(false)
-watch(() => props.parentOpen, async (n) => {
-  childOpen.value = n;
+function hide (e) {
+  emits('hideDropdown', e)
+}
+
+onMounted(() => {
+  document.addEventListener('click', (e) => hide(e))
+})
+onUnmounted(() => {
+  document.removeEventListener('click', hide)
 })
 </script>
 
 <template>
   <Teleport to='body'>
-    <div v-show='childOpen' class='dropdown' :style="{ top: `${newStyle.top}px`, left: `${newStyle.left}px` }">
+    <div
+      v-show='props.parentOpen'
+      class='dropdown'
+      :style="{ top: `${props.newStyle.top}px`, left: `${props.newStyle.left}px` }">
       <slot/>
     </div>
   </Teleport>
@@ -27,7 +39,5 @@ watch(() => props.parentOpen, async (n) => {
 .dropdown {
   position: absolute;
   z-index: 5;
-  border: 1px solid var(--gray);
-  background-color: var(--white);
 }
 </style>
