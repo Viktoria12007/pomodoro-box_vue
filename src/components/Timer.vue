@@ -4,20 +4,22 @@ import IconIncreaseTime from '@/components/icons/IconIncreaseTime.vue'
 import { useTasksListStore } from '@/stores/tasksList'
 import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '@/stores/settings'
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useStatisticStore } from '@/stores/statistic'
 
 const storeListTasks = useTasksListStore()
 const storeSettings = useSettingsStore()
 const storeStatistic = useStatisticStore()
 
-const { selectedTaskForTimer, orderSelectTaskForTimer, firstTask } = storeToRefs(storeListTasks)
-const { pomodoroTime, breakTime } = storeToRefs(storeSettings)
+const { selectedTaskForTimer, orderSelectTaskForTimer, firstTask, lengthTasks } = storeToRefs(storeListTasks)
+const { pomodoroTime, shortBreakTime, longBreakTime, frequencyLongBreak } = storeToRefs(storeSettings)
 
-const typeTimer = ref('default')
-const stateTimer = ref('start')
-let seconds = ref(0)
-let minutes = ref(pomodoroTime.value)
+const typeTimer = ref<string>('default')
+const stateTimer = ref<string>('start')
+const seconds = ref<number>(0)
+const minutes = ref<number>(pomodoroTime.value)
+const countPomodoro = ref<number>(0)
+
 let idForTimer;
 
 const displayMinutes = computed(() => displayTime(minutes))
@@ -40,9 +42,16 @@ async function tick() {
   if (minutes.value === 0 && seconds.value === 0) {
     if (typeTimer.value === 'work') {
       if (selectedTaskForTimer.value.pomodoro > 1) {
-        minutes.value = breakTime.value
+        countPomodoro.value++
+        if (countPomodoro.value === frequencyLongBreak.value) {
+          minutes.value = longBreakTime.value
+          countPomodoro.value = 0
+        } else {
+          minutes.value = shortBreakTime.value
+        }
         typeTimer.value = 'break'
         storeStatistic.setPomodoros(1)
+        storeListTasks.editTask('pomodoro', 'decrease', '', 'timer')
       } else {
         handleDone()
         return
@@ -51,7 +60,7 @@ async function tick() {
       minutes.value = pomodoroTime.value
       typeTimer.value = 'work'
       storeStatistic.setResolveIncreasePomodoros(true)
-      storeListTasks.editTask('pomodoro', 'decrease', '', 'timer')
+      storeListTasks.editTask('currentPomodoro', 'increase', '', 'timer')
     }
   }
 
@@ -72,7 +81,7 @@ function handleStop() {
   typeTimer.value = 'default'
   stateTimer.value = 'start'
   clearTimeout(idForTimer)
-  minutes.value = selectedTaskForTimer.value ? pomodoroTime.value : 0
+  minutes.value = pomodoroTime.value
   seconds.value = 0
 }
 function handleContinue() {
@@ -81,35 +90,40 @@ function handleContinue() {
 }
 function handleDone() {
   storeListTasks.deleteTask('timer')
-  storeListTasks.selectTaskForTimer(firstTask.value)
+  countPomodoro.value = 0
   handleStop()
 }
 function handleSkip() {
-  minutes.value = selectedTaskForTimer.value ? pomodoroTime.value : 0
+  minutes.value = pomodoroTime.value
   seconds.value = 0
   typeTimer.value = 'work'
+  storeListTasks.editTask('currentPomodoro', 'increase', '', 'timer')
   handleContinue()
 }
 onUnmounted(() => {
   clearTimeout(idForTimer)
 })
-// watch(selectedTaskForTimer.value, () => {
-//   seconds = selectedTaskForTimer.value.pomodoro * pomodoro.value
-// })
+watch(selectedTaskForTimer, () => {
+  countPomodoro.value = 0
+  handleStop()
+})
+watch(pomodoroTime, (n) => {
+  minutes.value = n
+})
+storeSettings.$subscribe(() => handleStop())
 </script>
 
 <template>
   <div class='timer'>
     <div :class="{ 'timer__header': true, 'timer__header_work': typeTimer === 'work', 'timer__header_break': typeTimer === 'break' }">
       <div class='timer__header-task'>{{ selectedTaskForTimer?.name }}</div>
-      <div>{{ selectedTaskForTimer ? `Помидор ${selectedTaskForTimer.pomodoro}` : '' }}</div>
+      <div>{{ selectedTaskForTimer ? `Помидор ${selectedTaskForTimer.currentPomodoro}` : '' }}</div>
     </div>
     <div class='timer__content'>
       <template v-if='selectedTaskForTimer'>
         <div class='timer__time-wrap'>
           <Transition mode='out-in'>
-            <div :class="{ 'timer__time': true, 'timer__time_work': typeTimer === 'work' && stateTimer === 'run', 'timer__time_break': typeTimer === 'break' && stateTimer === 'run' }"
-                 :key={seconds}>
+            <div :class="{ 'timer__time': true, 'timer__time_work': typeTimer === 'work' && stateTimer === 'run', 'timer__time_break': typeTimer === 'break' && stateTimer === 'run' }">
               {{ `${displayMinutes}:${displaySeconds}` }}
             </div>
           </Transition>
@@ -133,6 +147,7 @@ onUnmounted(() => {
           <Button v-show='typeTimer === "break"' @click='handleSkip' variant='outline-red'>Пропустить</Button>
         </div>
       </template>
+      <div v-else-if='!selectedTaskForTimer && lengthTasks'>Текущая задача не выбрана.</div>
       <div v-else>Задач пока нет!</div>
     </div>
   </div>
@@ -177,6 +192,7 @@ onUnmounted(() => {
   align-items: center;
 }
 .timer__time {
+  min-width: 394px;
   font-size: 150px;
   font-weight: 200;
   line-height: 179px;
