@@ -1,30 +1,27 @@
 <script setup lang="ts">
-import { computed } from 'vue/dist/vue'
-
-const props = defineProps<{
-  validation: () => void,
-  resolveValidation: boolean,
-}>()
+defineOptions({
+  inheritAttrs: false
+})
+const props = withDefaults(defineProps<{
+  validation?: string,
+  resolveValidation?: boolean,
+}>(), { resolveValidation: true })
 const model = defineModel()
 </script>
 
 <template>
-  <input
-    v-model.trim='model'
-    type='text'
-    minlength='2'
-    maxlength='100'
-    class='input'
-  />
-  <div v-show='validation && resolveValidation' class='add-task-form__validation'>{{validation}}</div>
+  <div class='input__wrap'>
+    <input
+      v-model='model'
+      class='input'
+      v-bind='$attrs'
+    />
+    <div v-show='validation && resolveValidation' class='input__validation'>{{validation}}</div>
+  </div>
 </template>
 
 <style scoped>
 .input {
-  width: 100%;
-  /*max-width: 100%;*/
-  /*padding: 19px 15px;*/
-  /*margin-bottom: 35px;*/
   border: 2px solid transparent;
   background-color: var(--gray-light);
 }
@@ -34,9 +31,16 @@ const model = defineModel()
 .input:invalid {
   border-color: var(--red-dark);
 }
-.add-task-form__validation {
+.input__wrap {
+  width: 100%;
+  position: relative;
+}
+.input__validation {
   position: absolute;
-  top: 55px;
+  top: 60px;
+  z-index: 5;
+  /*padding: 12.3px 5px;*/
   color: var(--red);
+  background-color: var(--white);
 }
 </style>
