@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import IconChart from '@/components/icons/IconChart.vue'
+import IconSettings from '@/components/icons/IconSettings.vue'
 </script>
 
 <template>
@@ -9,10 +10,14 @@ import IconChart from '@/components/icons/IconChart.vue'
       <RouterLink to="/">
         <img alt="Логотип" class="logo" src="@/assets/img/logo.svg" width="205" height="40" />
       </RouterLink>
-      <nav>
+      <nav class='header__nav'>
         <RouterLink to="/statistics" class='header__link'>
-            <IconChart class='header__icon'/>
-            <div>Статистика</div>
+          <IconChart class='header__icon'/>
+          <div>Статистика</div>
+        </RouterLink>
+        <RouterLink to="/settings" class='header__link'>
+          <IconSettings class='header__icon'/>
+          <div>Настройки</div>
         </RouterLink>
       </nav>
     </div>
@@ -33,7 +38,12 @@ import IconChart from '@/components/icons/IconChart.vue'
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 0;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+.header__nav {
+  display: flex;
+  gap: 20px;
 }
 .header__link {
   display: flex;
@@ -43,7 +53,10 @@ import IconChart from '@/components/icons/IconChart.vue'
   transition: color .4s ease-in-out;
 }
 .header__icon {
+  width: 24px;
+  height: 24px;
   fill: var(--red);
+  margin-right: 5px;
   transition: fill .4s ease-in-out;
 }
 .header__link:hover,
