@@ -2,6 +2,7 @@ import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { TasksList, Task } from '@/types/types'
 import { useSettingsStore } from '@/stores/settings'
+import { watch } from 'vue'
 
 export const useTasksListStore = defineStore('tasksList', () => {
   const tasks = reactive<TasksList>(localStorage.pomodoroTasks ? JSON.parse(localStorage.pomodoroTasks) : [])
@@ -16,7 +17,7 @@ export const useTasksListStore = defineStore('tasksList', () => {
   const firstTask = computed<Task>(() => tasks[0]) // удалить?
   const orderSelectTaskForTimer = computed<number>(() => tasks.findIndex((task) => task.id === selectedTaskForTimer.value?.id) + 1)
 
-  function selectTaskForTimer(task: Task) {
+  function selectTaskForTimer(task: Task | null) {
     selectedTaskForTimer.value = task
   }
   function selectTaskForAction(action) {
@@ -32,6 +33,9 @@ export const useTasksListStore = defineStore('tasksList', () => {
     const currentGoal = goal === 'action' ? selectedTaskForAction.value.id : selectedTaskForTimer.value.id
     const indexTask = tasks.findIndex((item) => item.id === currentGoal)
     tasks.splice(indexTask, 1)
+    if (currentGoal === selectedTaskForTimer.value.id) {
+      selectTaskForTimer(null)
+    }
   }
   function editTask(property: string, action: string, newName: string = '', goal: string = 'action') {
     const currentGoal = goal === 'action' ? selectedTaskForAction.value.id : selectedTaskForTimer.value.id
@@ -44,6 +48,11 @@ export const useTasksListStore = defineStore('tasksList', () => {
       currentTask[property] = newName
     }
   }
+
+  watch(tasks, (n) => {
+    localStorage.pomodoroTasks = JSON.stringify(n)
+  })
+
   return {
     tasks,
     selectedTaskForTimer,
