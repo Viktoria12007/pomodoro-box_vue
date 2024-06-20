@@ -9,19 +9,15 @@ import { ref } from 'vue'
 import ActionsMenu from '@/components/ActionsMenu.vue'
 import ModalWindow from '@/components/UI/ModalWindow.vue'
 import { useOpenDropdown } from '@/hooks/useOpenDropdown'
+import { useValidationInput } from '@/hooks/useValidationInput'
 
 const showModal = ref(false)
 const { openDropdown, coords, hideDropdown, getCoords } = useOpenDropdown()
+const { validation, setValidation, validationNameTaskInput } = useValidationInput()
+
 const store = useTasksListStore()
 const { tasks, totalTime, lengthTasks, selectedTaskForTimer, selectedTaskForAction, showEditTaskInput } = storeToRefs(store)
 
-store.$subscribe((mutation, state) => {
-  localStorage.pomodoroTasks = JSON.stringify(state.tasks)
-  const isExist = state.tasks.find((task) => task.id === selectedTaskForTimer.value?.id)
-  if (!isExist) {
-    store.selectTaskForTimer(null)
-  }
-})
 function handleClickMenuButton(e, task) {
   e.stopPropagation()
   store.selectTaskForAction(task)
@@ -31,8 +27,10 @@ function handleSelectTask(task) {
   store.selectTaskForTimer(task)
 }
 function handleHideEditInput(e) {
-  store.editTask("name", "editName", e.target.value)
-  store.setShowEditTaskInput(false)
+  if (!validation.value) {
+    store.editTask("name", "editName", e.target.value)
+    store.setShowEditTaskInput(false)
+  }
 }
 function hideModal() {
   showModal.value = false
@@ -46,12 +44,23 @@ function handleDeleteTask() {
 <template>
   <div :v-if={lengthTasks}>
     <TransitionGroup tag='ul' class='tasks-list'>
-      <li v-for='task in tasks' :key='task.id' @click='handleSelectTask(task)' :class="{'tasks-list__item': true, 'tasks-list__item_select': task.id === selectedTaskForTimer?.id}">
+      <li
+        v-for='task in tasks'
+        :key='task.id'
+        @click='handleSelectTask(task)'
+        :class="{'tasks-list__item': true, 'tasks-list__item_select': task.id === selectedTaskForTimer?.id}"
+      >
         <div class='tasks-list__pomodoro'>{{task.pomodoro}}</div>
         <Input
           v-if='showEditTaskInput && selectedTaskForAction?.id === task.id'
-          v-model='task.name'
+          v-model.trim='task.name'
+          @input='(e) => setValidation(validationNameTaskInput(e.target.value))'
           @blur='(e) => handleHideEditInput(e)'
+          :validation='validation'
+          type='text'
+          minlength='2'
+          maxlength='40'
+          placeholder='Название задачи'
           class='tasks-list__input'
         />
         <div v-else class='tasks-list__task'>{{task.name}}</div>
@@ -72,6 +81,12 @@ function handleDeleteTask() {
   </div>
 </template>
 
+<style>
+.tasks-list__input {
+  width: 85%;
+  padding: 12.3px 5px;
+}
+</style>
 <style scoped>
 .tasks-list {
   width: 370px;
@@ -84,7 +99,6 @@ function handleDeleteTask() {
   display: flex;
   align-items: center;
   font-weight: 300;
-  /*padding: 15px 0;*/
   cursor: pointer;
   transition: background-color .4s ease-in-out;
 }
@@ -96,26 +110,25 @@ function handleDeleteTask() {
 }
 .tasks-list__pomodoro {
   width: 25px;
+  min-width: 25px;
   height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 100%;
   border: 1px solid var(--gray);
-  /*margin-right: 4px;*/
+  margin-right: 5px;
 }
 .tasks-list__task {
-  padding: 15px 4px;
-  margin-right: auto;
-}
-.tasks-list__input {
-  width: 80%;
-  padding: 14px 4px;
-  /*padding: 5px 5px;*/
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 15px 5px 15px 0px;
   margin-right: auto;
 }
 .tasks-list__button {
   padding: 10px 0px;
+  margin-left: auto;
 }
 .tasks-list__total-time {
   font-weight: 300;
