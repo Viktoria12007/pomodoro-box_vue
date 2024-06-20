@@ -1,7 +1,8 @@
 export interface Task {
   id: number | string,
   name: string,
-  pomodoro: number
+  pomodoro: number,
+  currentPomodoro: number,
 }
 
 export type TasksList = Task[]
