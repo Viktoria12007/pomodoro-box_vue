@@ -7,20 +7,20 @@ import { useSettingsStore } from '@/stores/settings'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useStatisticStore } from '@/stores/statistic'
 
-const storeListTasks = useTasksListStore()
+const storeTasksList = useTasksListStore()
 const storeSettings = useSettingsStore()
 const storeStatistic = useStatisticStore()
 
-const { selectedTaskForTimer, orderSelectTaskForTimer, firstTask, lengthTasks } = storeToRefs(storeListTasks)
+const { selectedTaskForTimer, orderSelectTaskForTimer, firstTask, lengthTasks } = storeToRefs(storeTasksList)
 const { pomodoroTime, shortBreakTime, longBreakTime, frequencyLongBreak } = storeToRefs(storeSettings)
+const { resolveWinPomodoro } = storeToRefs(storeStatistic)
 
 const typeTimer = ref<string>('default')
 const stateTimer = ref<string>('start')
 const seconds = ref<number>(0)
 const minutes = ref<number>(pomodoroTime.value)
 const countPomodoro = ref<number>(0)
-
-let idForTimer;
+const idForTimer = ref<number>(0)
 
 const displayMinutes = computed(() => displayTime(minutes))
 const displaySeconds = computed(() => displayTime(seconds))
@@ -49,9 +49,12 @@ async function tick() {
         } else {
           minutes.value = shortBreakTime.value
         }
+        storeStatistic.addShortLongBreak()
         typeTimer.value = 'break'
-        storeStatistic.setPomodoros(1)
-        storeListTasks.editTask('pomodoro', 'decrease', '', 'timer')
+        if (resolveWinPomodoro.value) {
+          storeStatistic.addWonPomodoro()
+        }
+        storeTasksList.editTask('pomodoro', 'decrease', '', 'timer')
       } else {
         handleDone()
         return
@@ -59,49 +62,66 @@ async function tick() {
     } else {
       minutes.value = pomodoroTime.value
       typeTimer.value = 'work'
-      storeStatistic.setResolveIncreasePomodoros(true)
-      storeListTasks.editTask('currentPomodoro', 'increase', '', 'timer')
+      storeStatistic.setResolveWinPomodoro(true)
+      storeTasksList.editTask('currentPomodoro', 'increase', '', 'timer')
     }
   }
 
   const diff = 1000 - (Date.now() % 1000);
-  idForTimer = setTimeout(tick, diff)
+  idForTimer.value = setTimeout(tick, diff)
 }
 function handleStart() {
   typeTimer.value = 'work'
   stateTimer.value = 'run'
+  storeStatistic.addWorkTimeTimer()
   tick()
 }
 function handlePause() {
-   storeStatistic.setResolveIncreasePomodoros(false)
-   stateTimer.value = 'pause'
-   clearTimeout(idForTimer)
+  stateTimer.value = 'pause'
+  clearTimeout(idForTimer.value)
+  storeStatistic.setEndForLastWorkTime()
+  storeStatistic.addStopPause()
+  if (typeTimer.value === 'break') {
+    storeStatistic.setEndForLastBreak()
+  }
 }
 function handleStop() {
   typeTimer.value = 'default'
   stateTimer.value = 'start'
-  clearTimeout(idForTimer)
+  clearTimeout(idForTimer.value)
+  storeStatistic.setEndForLastWorkTime()
   minutes.value = pomodoroTime.value
   seconds.value = 0
+  storeStatistic.setResolveWinPomodoro(true)
 }
 function handleContinue() {
+  storeStatistic.setResolveWinPomodoro(false)
   stateTimer.value = 'run'
+  if (typeTimer.value === 'break') {
+    storeStatistic.addShortLongBreak()
+  }
+  storeStatistic.addWorkTimeTimer()
   tick()
 }
 function handleDone() {
-  storeListTasks.deleteTask('timer')
+  storeTasksList.deleteTask('timer')
   countPomodoro.value = 0
+  if (resolveWinPomodoro.value) {
+    storeStatistic.addWonPomodoro()
+  }
   handleStop()
 }
 function handleSkip() {
+  storeStatistic.setEndForLastBreak()
   minutes.value = pomodoroTime.value
   seconds.value = 0
   typeTimer.value = 'work'
-  storeListTasks.editTask('currentPomodoro', 'increase', '', 'timer')
+  storeTasksList.editTask('currentPomodoro', 'increase', '', 'timer')
   handleContinue()
+  storeStatistic.setResolveWinPomodoro(true)
 }
 onUnmounted(() => {
-  clearTimeout(idForTimer)
+  clearTimeout(idForTimer.value)
 })
 watch(selectedTaskForTimer, () => {
   countPomodoro.value = 0
@@ -127,7 +147,7 @@ storeSettings.$subscribe(() => handleStop())
               {{ `${displayMinutes}:${displaySeconds}` }}
             </div>
           </Transition>
-          <Button @click="storeListTasks.editTask('pomodoro', 'increase', '', 'timer')" class='timer__increase-button' variant='light'>
+          <Button @click="storeTasksList.editTask('pomodoro', 'increase', '', 'timer')" class='timer__increase-button' variant='light'>
             <IconIncreaseTime class='timer__icon'/>
           </Button>
         </div>
@@ -140,7 +160,7 @@ storeSettings.$subscribe(() => handleStop())
           <Button v-show='stateTimer === "run"' @click='handlePause'>Пауза</Button>
           <Button v-show='stateTimer === "pause"' @click='handleContinue'>Продолжить</Button>
           <Button v-show='typeTimer !== "break" && stateTimer !== "pause"'
-                  @click='handleStop'
+                  @click='storeStatistic.addStopPause(); handleStop()'
                   :variant='stateTimer === "run" ? "outline-red" : "outline-gray"'
                   :disabled='stateTimer === "start"'>Стоп</Button>
           <Button v-show='typeTimer === "work" && stateTimer === "pause"' @click='handleDone' variant='outline-red'>Сделано</Button>
