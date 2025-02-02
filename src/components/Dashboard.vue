@@ -1,19 +1,33 @@
 <script setup lang='ts'>
 import Chart from '../components/Chart.vue';
+import { useStatisticStore } from '@/stores/statistic'
+import { storeToRefs } from 'pinia'
+import { displayTime } from '@/handlers/displayTime'
+
+const daysWeekStr = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота']
+
+const storeStatistic = useStatisticStore()
+const { selectedDay, selectedDayObject } = storeToRefs(storeStatistic)
 </script>
 
 <template>
   <ul class='dashboard'>
     <li class='dashboard__item'>
-      <h3 class='dashboard-title dashboard-title__day'>Понедельник</h3>
+      <h3 class='dashboard-title dashboard-title__day'>{{daysWeekStr[selectedDay]}}</h3>
       <p class='dashboard__total-time'>
-        Вы работали над задачами в течение <span class='dashboard__total-time_red'>51 минуты</span>
+        <template v-if='selectedDayObject.workTime'>Вы работали над задачами в течение
+          <span class='dashboard__total-time_red'>{{ displayTime(selectedDayObject.workTime) }}</span>
+        </template>
+        <template v-else>Нет данных</template>
       </p>
     </li>
     <li class='dashboard__item'>
       <Chart />
     </li>
-    <li class='dashboard__item'></li>
+    <li class='dashboard__item'>
+      <div v-if='!selectedDayObject.wonPomodoros' class='dashboard-item__pomodoro'></div>
+      <div v-else>{{selectedDayObject.wonPomodoros}}</div>
+    </li>
     <li class='dashboard__item'>
       <h3 class='dashboard-title'>Фокус</h3>
       <div class='dashboard-value'>0%</div>
@@ -95,6 +109,7 @@ import Chart from '../components/Chart.vue';
 }
 .dashboard__item {
   padding: 25px;
+  overflow: hidden;
   background-color: var(--gray-light)
 }
 .dashboard-title {
