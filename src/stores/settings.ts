@@ -21,7 +21,6 @@ export const useSettingsStore = defineStore('settings', () => {
     frequencyLongBreak.value = time
   }
   function setOnNotifications(flag: boolean) {
-    console.log(flag)
     onNotifications.value = flag
   }
   // function setPomodoro(quantity: number) {
